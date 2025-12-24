@@ -48,5 +48,6 @@ This project is a backend API for a social network application. It is built with
 | `/api/posts/`         | GET    | Yes                    | None            |
 | `/api/posts/`         | POST   | Yes                   | (description, body) |
 | `/api/posts/<post_id>/` | GET  | Yes                    | None            |
+| `/api/posts/<post_id>/` | DELETE  | Yes                    | None            |
 | `/api/posts/<post_id>/`         | PUT/PATCH   | Yes                   | All post fields are optional in PATCH method (description, body) |
 | `/api/posts/<post_id>/new-comment` | POST  | Yes                    | Body |
