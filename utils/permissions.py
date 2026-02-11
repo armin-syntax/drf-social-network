@@ -13,24 +13,24 @@ def is_related_user(obj, user, fields=['user', 'owner', 'author']):
     return False
 
 
-class IsAnonymous(BasePermission):
+class IsAnonymousPermission(BasePermission):
     def has_permission(self, request, view):
         return request.user.is_anonymous
 
 
-class IsOwner(BasePermission):
+class IsOwnerPermission(BasePermission):
     def has_object_permission(self, request, view, obj):
         return is_related_user(obj, request.user)
 
 
-class IsOwnerOrReadOnly(BasePermission):
+class IsOwnerOrReadOnlyPermission(BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
             return True
         return is_related_user(obj, request.user)
 
 
-class IsNotSelf(BasePermission):
+class IsNotSelfPermission(BasePermission):
     def has_permission(self, request, view):
         username = view.kwargs.get('username')
         return request.user.username != username

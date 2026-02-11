@@ -7,7 +7,6 @@ User = settings.AUTH_USER_MODEL
 
 class Post(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
-    description = models.CharField(max_length=100)
     body = models.TextField(max_length=5000)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at =models.DateTimeField(auto_now=True)
@@ -16,10 +15,10 @@ class Post(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return self.get_short_description()
+        return self.get_short_body()
 
-    def get_short_description(self):
-        return (self.description[:20] + '...') if len(self.description) > 20 else self.description
+    def get_short_body(self):
+        return (self.body[:20] + '...') if len(self.body) > 20 else self.body
 
 
 class Comment(models.Model):

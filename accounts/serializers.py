@@ -9,7 +9,7 @@ from .models import Relation
 User = get_user_model()
 
 
-class RegisterSerializer(serializers.ModelSerializer):
+class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     confirm_password = serializers.CharField(write_only=True)
 
@@ -26,8 +26,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
-        if attrs['password'] != attrs['confirm_password']:
-            raise ValidationError('Passwords do not match.')
+        if attrs.get('password') != attrs.get('confirm_password'):
+            raise ValidationError({'confirm_password': "Passwords don't match"})
         return attrs
     
     def create(self, validated_data):
@@ -36,7 +36,10 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class UserListSerializer(serializers.ModelSerializer):
-    profile_url = serializers.SerializerMethodField()
+    profile_url = serializers.HyperlinkedIdentityField(
+        view_name='accounts:user-detail',
+        lookup_field='username',
+    )
 
     class Meta:
         model = User
@@ -46,23 +49,42 @@ class UserListSerializer(serializers.ModelSerializer):
             'email',
             'first_name',
             'last_name',
+            'phone_number',
             'bio',
             'image',
             'profile_url',
         ]
-
-    def get_profile_url(self, obj):
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
         request = self.context.get('request')
-        return reverse('accounts:profile', kwargs={'username': obj.username}, request=request)
+
+        if request and request.user != instance:
+            data['email'] = None
+            data['phone_number'] = None
+        return data
 
 
-class UserProfileSerializer(serializers.ModelSerializer):
-    posts_count = serializers.SerializerMethodField()
-    followers_count = serializers.SerializerMethodField()
-    following_count = serializers.SerializerMethodField()
-    post_list_url = serializers.SerializerMethodField()
-    follower_list_url = serializers.SerializerMethodField()
-    following_list_url = serializers.SerializerMethodField()
+class UserDetailSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=False)
+    phone_number = serializers.CharField(required=False)
+
+    posts_count = serializers.IntegerField(read_only=True)
+    followers_count = serializers.IntegerField(read_only=True)
+    following_count = serializers.IntegerField(read_only=True)
+
+    post_list_url = serializers.HyperlinkedIdentityField(
+        view_name='accounts:user-post-list',
+        lookup_field='username',
+    )
+    follower_list_url = serializers.HyperlinkedIdentityField(
+        view_name='accounts:user-follower-list',
+        lookup_field='username',
+    )
+    following_list_url = serializers.HyperlinkedIdentityField(
+        view_name='accounts:user-following-list',
+        lookup_field='username',
+    )
     follow_url = serializers.SerializerMethodField()
     unfollow_url = serializers.SerializerMethodField()
 
@@ -76,10 +98,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'last_name',
             'phone_number',
             'website_url',
-            'github_url',
-            'linkedin_url',
             'bio',
-            'image',   
+            'image',
             'posts_count',
             'followers_count',
             'following_count',
@@ -90,55 +110,44 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'unfollow_url',
         ]
     
-    def get_posts_count(self, obj):
-        return obj.get_posts_count()
-    
-    def get_followers_count(self, obj):
-        return obj.get_followers_count()
-    
-    def get_following_count(self, obj):
-        return obj.get_following_count()
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
 
-    def get_post_list_url(self, obj):
-        request = self.context.get('request')
-        return reverse('accounts:post_list', kwargs={'username': obj.username}, request=request)
-    
-    def get_follower_list_url(self, obj):
-        request = self.context.get('request')
-        return reverse('accounts:follower_list', kwargs={'username': obj.username}, request=request)
-    
-    def get_following_list_url(self, obj):
-        request = self.context.get('request')
-        return reverse('accounts:following_list', kwargs={'username': obj.username}, request=request)
+        if request and request.user != instance:
+            data['email'] = None
+            data['phone_number'] = None
+        return data
     
     def get_follow_url(self, obj):
         request = self.context.get('request')
-        if obj != request.user:
-            if not Relation.objects.filter(from_user=request.user, to_user=obj).exists():
-                return reverse('accounts:follow', kwargs={'username': obj.username}, request=request)
-        return None
+
+        if not request or request.user == obj:
+            return None
+        
+        if Relation.objects.filter(from_user=request.user, to_user=obj).exists():
+            return None
     
+        return reverse('accounts:user-follow', args=[obj.username], request=request)
+
     def get_unfollow_url(self, obj):
         request = self.context.get('request')
-        if obj != request.user:
-            if Relation.objects.filter(from_user=request.user, to_user=obj).exists():
-                return reverse('accounts:unfollow', kwargs={'username': obj.username}, request=request)
-        return None
+
+        if not request or request.user == obj:
+            return None
+        
+        if not Relation.objects.filter(from_user=request.user, to_user=obj).exists():
+            return None
+        
+        return reverse('accounts:user-unfollow', args=[obj.username], request=request)
 
 
 class UserInlineSerializer(serializers.ModelSerializer):
-    profile_url = serializers.SerializerMethodField()
+    profile_url = serializers.HyperlinkedIdentityField(
+        view_name='accounts:user-detail',
+        lookup_field='username',
+    )
 
     class Meta:
         model = User
-        fields = [
-            'id',
-            'username',
-            'first_name',
-            'last_name',
-            'profile_url',
-        ]
-
-    def get_profile_url(self, obj):
-        request = self.context.get('request')
-        return reverse('accounts:profile', kwargs={'username': obj.username}, request=request)
+        fields = ['id', 'username', 'first_name', 'last_name', 'profile_url']

@@ -1,8 +1,9 @@
-from django.shortcuts import get_object_or_404
-from rest_framework import generics, permissions, filters
+from django.db.models import Count
+from rest_framework import generics, permissions, filters, status
+from rest_framework.response import Response
 
-from utils.permissions import IsOwnerOrReadOnly
-from .models import Post, Comment
+from utils.permissions import IsOwnerOrReadOnlyPermission
+from .models import Post
 from .serializers import (
     PostCreateSerializer,
     PostListSerializer,
@@ -11,34 +12,28 @@ from .serializers import (
 )
 
 
-class PostListCreateView(generics.ListCreateAPIView):
-    queryset = Post.objects.all()
+class PostListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Post.objects.annotate(comments_count=Count('comments'))
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
-    search_fields = ['description', 'body']
+    search_fields = ['body']
     
     def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return PostListSerializer
-        return PostCreateSerializer
-    
+        return PostListSerializer if self.request.method == 'GET' else PostCreateSerializer
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
 
-class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
+class PostDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Post.objects.all()
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
     serializer_class = PostDetailSerializer
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnlyPermission]
     lookup_field = 'pk'
 
-
-class CommentCreateView(generics.CreateAPIView):
-    queryset = Comment.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
-    serializer_class = CommentCreateSerializer
-
-    def perform_create(self, serializer):
-        user = self.request.user
-        post = get_object_or_404(Post, pk=self.kwargs['pk'])
-        serializer.save(user=user, post=post)
+    def post(self, request, *args, **kwargs):
+        post = self.get_object()
+        serializer = CommentCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user, post=post)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

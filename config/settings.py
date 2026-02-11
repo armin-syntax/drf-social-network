@@ -12,23 +12,26 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
 import os
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env_path = BASE_DIR / ".env"
+load_dotenv(env_path, override=True)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-c9zp!0-9c&_ts!x4vo9twmnd1q(3h(wtq1yo7oq-nyn#z4hb^0'
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY") or "dev-insecure-key"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = (os.environ.get("DJANGO_DEBUG") or "True") == "True"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = (os.environ.get("DJANGO_ALLOWED_HOSTS") or "localhost").split(",")
 
 
 # Application definition
@@ -42,18 +45,18 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # local apps
+    # Local apps
     'accounts',
     'posts',
 
-    # third party apps
+    # Third-Party apps
     'rest_framework',
     'corsheaders',
+    'phonenumber_field',
 ]
 
 MIDDLEWARE = [
-    # Cors
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware', # CORS
 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -88,9 +91,13 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": os.environ.get("DB_ENGINE") or "django.db.backends.sqlite3",
+        "NAME": os.environ.get("DB_NAME") or (BASE_DIR / "db.sqlite3"),
+        "USER": os.environ.get("DB_USER") or "",
+        "PASSWORD": os.environ.get("DB_PASSWORD") or "",
+        "HOST": os.environ.get("DB_HOST") or "localhost",
+        "PORT": os.environ.get("DB_PORT") or "5432",
     }
 }
 
@@ -149,9 +156,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
+CACHE_BACKEND = os.environ.get("CACHE_BACKEND") or "django.core.cache.backends.locmem.LocMemCache"
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'BACKEND': CACHE_BACKEND,
+        'LOCATION': os.environ.get('REDIS_URL') or '',
     },
 }
 
@@ -163,22 +172,23 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle',
         'rest_framework.throttling.AnonRateThrottle',
     ],
-    'DEFAULT_THROTTLE_RATES': { # 429 Too many requests
-        'user': '1000/hour',
-        'anon': '100/day',
+    'DEFAULT_THROTTLE_RATES': {
+        'user': os.environ.get('DRF_THROTTLE_USER', '1000/hour'),
+        'anon': os.environ.get('DRF_THROTTLE_ANON', '100/day'),
     },
 }
 
-if DEBUG:
-    SIMPLE_JWT = {
-        'ACCESS_TOKEN_LIFETIME': timedelta(weeks=1),
-        'REFRESH_TOKEN_LIFETIME': timedelta(weeks=4),
-    }
+JWT_ACCESS_TOKEN_MINUTES = int(os.environ.get("JWT_ACCESS_TOKEN_MINUTES") or 60)
+JWT_REFRESH_TOKEN_DAYS = int(os.environ.get("JWT_REFRESH_TOKEN_DAYS") or 7)
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=JWT_ACCESS_TOKEN_MINUTES),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=JWT_REFRESH_TOKEN_DAYS),
+}
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:8000',
-    'http://localhost:3000',
-]
+CORS_ALLOWED_ORIGINS = (
+    os.environ.get("CORS_ALLOWED_ORIGINS")
+    or "http://localhost:8000,http://localhost:3000"
+).split(",")
 
 # ---- END MY CONFIGS ----

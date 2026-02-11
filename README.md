@@ -31,8 +31,8 @@ This project is a backend API for a social network application. It is built with
 |-----------------------|--------|-----------------------|---------------------------------------------------------------------------------|
 | `/api/accounts/`      | GET    | Yes                    | None                                                                            |
 | `/api/accounts/`      | POST   | No                    | username, email, first_name, last_name, phone_number, password, confirm_password |
-| `/api/accounts/<username>/` | GET | No | None | 
-| `/api/accounts/<username>/` | PUT/PATCH | Yes | All profile fields are optional in PATCH method (username, email, first_name, last_name, phone_number, password, confirm_password) | 
+| `/api/accounts/<username>/` | GET | Yes| None | 
+| `/api/accounts/<username>/` | PUT/PATCH | Yes | All profile fields are optional (username, email, first_name, last_name, phone_number, website_url, bio, image) | 
 | `/api/accounts/<username>/` | DELETE | Yes | None |
 | `/api/accounts/<username>/follow/`   | POST | Yes       | None                                                                            |
 | `/api/accounts/<username>/unfollow/` | DELETE | Yes       | None                                                                            |
@@ -46,8 +46,8 @@ This project is a backend API for a social network application. It is built with
 | Endpoint              | Method | Access Token Required | Required Fields |
 |-----------------------|--------|-----------------------|-----------------|
 | `/api/posts/`         | GET    | Yes                    | None            |
-| `/api/posts/`         | POST   | Yes                   | (description, body) |
+| `/api/posts/`         | POST   | Yes                   | body |
 | `/api/posts/<post_id>/` | GET  | Yes                    | None            |
 | `/api/posts/<post_id>/` | DELETE  | Yes                    | None            |
-| `/api/posts/<post_id>/`         | PUT/PATCH   | Yes                   | All post fields are optional in PATCH method (description, body) |
-| `/api/posts/<post_id>/new-comment` | POST  | Yes                    | Body |
+| `/api/posts/<post_id>/`         | PUT/PATCH   | Yes                   | body |
+| `/api/posts/<post_id>/` | POST  | Yes                    | body |
