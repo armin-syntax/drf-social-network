@@ -5,10 +5,18 @@ from rest_framework import generics, permissions, filters, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from utils.permissions import IsAnonymousPermission, IsNotSelfPermission, IsOwnerOrReadOnlyPermission
+from utils.permissions import (
+    IsAnonymousPermission,
+    IsNotSelfPermission,
+    IsOwnerOrReadOnlyPermission,
+)
 from posts.serializers import PostListSerializer
 from .models import Relation
-from .serializers import UserCreateSerializer, UserListSerializer, UserDetailSerializer
+from .serializers import (
+    UserCreateSerializer,
+    UserListSerializer,
+    UserDetailSerializer,
+)
 
 
 User = get_user_model()
