@@ -39,7 +39,7 @@ class UsernameValidator:
 
 @deconstructible
 class NameValidator:
-    def __init__(self, field_name='Name'):
+    def __init__(self, field_name="full name"):
         self.field_name = field_name
 
     def __call__(self, value):
@@ -47,7 +47,7 @@ class NameValidator:
 
         apply_regex(
             value,
-            r"^[a-zA-Z]+$",
+            r"^[A-Za-z]+(?: [A-Za-z]+)*$",
             error_msg,
         )
 

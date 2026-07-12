@@ -18,16 +18,14 @@ class UserCreateSerializer(serializers.ModelSerializer):
         fields = [
             'username',
             'email',
-            'first_name',
-            'last_name',
-            'phone_number',
+            'full_name',
             'password',
             'confirm_password',
         ]
 
     def validate(self, attrs):
         if attrs.get('password') != attrs.get('confirm_password'):
-            raise ValidationError({'confirm_password': "Passwords don't match"})
+            raise ValidationError({'confirm_password': "Passwords didn`t match"})
         return attrs
     
     def create(self, validated_data):
@@ -47,11 +45,9 @@ class UserListSerializer(serializers.ModelSerializer):
             'id',
             'username',
             'email',
-            'first_name',
-            'last_name',
-            'phone_number',
+            'full_name'
             'bio',
-            'image',
+            'avatar',
             'profile_url',
         ]
     
@@ -61,13 +57,11 @@ class UserListSerializer(serializers.ModelSerializer):
 
         if request and request.user != instance:
             data['email'] = None
-            data['phone_number'] = None
         return data
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=False)
-    phone_number = serializers.CharField(required=False)
 
     posts_count = serializers.IntegerField(read_only=True)
     followers_count = serializers.IntegerField(read_only=True)
@@ -94,12 +88,9 @@ class UserDetailSerializer(serializers.ModelSerializer):
             'id',
             'username',
             'email',
-            'first_name',
-            'last_name',
-            'phone_number',
-            'website_url',
+            'full_name'
             'bio',
-            'image',
+            'avatar',
             'posts_count',
             'followers_count',
             'following_count',
@@ -150,4 +141,4 @@ class UserInlineSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'profile_url']
+        fields = ['id', 'username', 'full_name', 'profile_url']

@@ -25,7 +25,7 @@ User = get_user_model()
 class UserListCreateAPIView(generics.ListCreateAPIView):
     queryset = User.objects.all()
     filter_backends = [filters.SearchFilter]
-    search_fields = ['username', 'first_name', 'last_name', 'bio']
+    search_fields = ['username', 'full_name', 'bio']
     
     def get_permissions(self):
         return [permissions.IsAuthenticated()] if self.request.method == 'GET' else [IsAnonymousPermission()]

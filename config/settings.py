@@ -12,26 +12,23 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
-from dotenv import load_dotenv
 import os
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-env_path = BASE_DIR / ".env"
-load_dotenv(env_path, override=True)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY") or "dev-insecure-key"
+SECRET_KEY = "dev-insecure-key"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = (os.environ.get("DJANGO_DEBUG") or "True") == "True"
+DEBUG = True
 
-ALLOWED_HOSTS = (os.environ.get("DJANGO_ALLOWED_HOSTS") or "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -52,7 +49,6 @@ INSTALLED_APPS = [
     # Third-Party apps
     'rest_framework',
     'corsheaders',
-    'phonenumber_field',
 ]
 
 MIDDLEWARE = [
@@ -91,16 +87,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": os.environ.get("DB_ENGINE") or "django.db.backends.sqlite3",
-        "NAME": os.environ.get("DB_NAME") or (BASE_DIR / "db.sqlite3"),
-        "USER": os.environ.get("DB_USER") or "",
-        "PASSWORD": os.environ.get("DB_PASSWORD") or "",
-        "HOST": os.environ.get("DB_HOST") or "localhost",
-        "PORT": os.environ.get("DB_PORT") or "5432",
-    }
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    },
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -156,11 +147,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
-CACHE_BACKEND = os.environ.get("CACHE_BACKEND") or "django.core.cache.backends.locmem.LocMemCache"
+CACHE_BACKEND = "django.core.cache.backends.locmem.LocMemCache"
 CACHES = {
     'default': {
         'BACKEND': CACHE_BACKEND,
-        'LOCATION': os.environ.get('REDIS_URL') or '',
     },
 }
 
@@ -173,23 +163,21 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.AnonRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'user': os.environ.get('DRF_THROTTLE_USER', '1000/hour'),
-        'anon': os.environ.get('DRF_THROTTLE_ANON', '100/day'),
+        'user': '1000/hour',
+        'anon': '100/day',
     },
 }
 
-JWT_ACCESS_TOKEN_MINUTES = int(os.environ.get("JWT_ACCESS_TOKEN_MINUTES") or 60)
-JWT_REFRESH_TOKEN_DAYS = int(os.environ.get("JWT_REFRESH_TOKEN_DAYS") or 7)
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=JWT_ACCESS_TOKEN_MINUTES),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=JWT_REFRESH_TOKEN_DAYS),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
 
-# CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = (
-    os.environ.get("CORS_ALLOWED_ORIGINS")
-    or "http://localhost:8000,http://localhost:3000"
-).split(",")
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:8000',
+    'http://localhost:3000',
+    'http://localhost:5173',
+]
 
 # ---- END MY CONFIGS ----

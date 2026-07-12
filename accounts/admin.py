@@ -3,7 +3,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 
 from .models import Relation
-from .forms import CustomUserCreationForm, CustomUserChangeForm
 
 
 User = get_user_model()
@@ -11,32 +10,83 @@ User = get_user_model()
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
-    add_form = CustomUserCreationForm
-    form = CustomUserChangeForm
-    list_display = ['username', 'email', 'first_name', 'last_name', 'is_staff']
-    list_filter = ['is_staff', 'is_superuser', 'is_active', 'groups']
-    search_fields = [
-        'username',
-        'email',
-        'first_name',
-        'last_name',
-        'phone_number',
-        'website_url',
-        'bio',
-    ]
-    add_fieldsets = UserAdmin.add_fieldsets + (
-        (
-            'Personal Information', {
-                'fields': ('phone_number', 'bio', 'image', 'website_url'),
-            }
-        ),
+    list_display = (
+        "username",
+        "email",
+        "full_name",
+        "is_staff",
+        "is_active",
+        "created_at",
     )
-    fieldsets = UserAdmin.fieldsets + (
-        (
-            'Personal Info', {
-                'fields': ('phone_number', 'bio', 'image', 'website_url'),
-            }
-        ),
+
+    list_filter = (
+        "is_staff",
+        "is_superuser",
+        "is_active",
+        "groups",
+    )
+
+    search_fields = (
+        "username",
+        "email",
+        "full_name",
+        "bio",
+    )
+
+    ordering = ("-created_at",)
+
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+        "last_login",
+        "date_joined",
+    )
+
+    fieldsets = (
+        (None, {
+            "fields": (
+                "username",
+                "password",
+            )
+        }),
+        ("Personal Information", {
+            "fields": (
+                "full_name",
+                "email",
+                "bio",
+                "avatar",
+            )
+        }),
+        ("Permissions", {
+            "fields": (
+                "is_active",
+                "is_staff",
+                "is_superuser",
+                "groups",
+                "user_permissions",
+            )
+        }),
+        ("Important Dates", {
+            "fields": (
+                "last_login",
+                "date_joined",
+                "created_at",
+                "updated_at",
+            )
+        }),
+    )
+
+    add_fieldsets = (
+        (None, {
+            "classes": ("wide",),
+            "fields": (
+                "username",
+                "email",
+                "full_name",
+                "password1",
+                "password2",
+            ),
+        }),
     )
 
 
@@ -48,18 +98,12 @@ class RelationAdmin(admin.ModelAdmin):
         # from_user
         'from_user__username',
         'from_user__email',
-        'from_user__first_name',
-        'from_user__last_name',
-        'from_user__phone_number',
-        'from_user__website_url',
+        'from_user__full_name',
         'from_user__bio',
 
         # to_user
         'to_user__username',
         'to_user__email',
-        'to_user__first_name',
-        'to_user__last_name',
-        'to_user__phone_number',
-        'to_user__website_url',
+        'to_user__full_name',
         'to_user__bio',
     ]

@@ -2,10 +2,9 @@ from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import FileExtensionValidator
-from phonenumber_field.modelfields import PhoneNumberField
 
-from utils.paths import get_user_profile_image_upload_path
-from utils.validators import UsernameValidator, NameValidator, URLValidator
+from utils.paths import user_avatar_upload_path
+from utils.validators import UsernameValidator, NameValidator
 
 
 User = settings.AUTH_USER_MODEL
@@ -27,29 +26,29 @@ class CustomUser(AbstractUser):
             'unique': 'This email address already exists.',
         },
     )
-    first_name = models.CharField(max_length=15, validators=[NameValidator('First Name')])
-    last_name = models.CharField(max_length=15, validators=[NameValidator('Last Name')])
-    phone_number = PhoneNumberField(
-        unique=True,
-        error_messages={
-            'unique': 'This phone number already exists.',
-        },
+    full_name = models.CharField(
+        max_length=100,
+        validators=[
+            NameValidator(),
+        ],
     )
     bio = models.TextField(max_length=200, blank=True, null=True)
-    image = models.ImageField(
-        upload_to=get_user_profile_image_upload_path,
+    avatar = models.ImageField(
+        upload_to=user_avatar_upload_path,
         blank=True,
         null=True,
-        validators=[FileExtensionValidator(allowed_extensions=['png', 'jpg', 'jpeg', 'gif'])],
+        validators=[
+            FileExtensionValidator(
+                allowed_extensions=['png', 'jpg', 'jpeg', 'gif'],
+            ),
+        ],
     )
-    website_url = models.URLField(
-        max_length=100,
-        blank=True,
-        null=True,
-        validators=[URLValidator()],
-    )
-
-    REQUIRED_FIELDS = ['email', 'first_name', 'last_name', 'phone_number']
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # I don`t need these fields
+    first_name = None
+    last_name = None
 
     class Meta:
         ordering = ['username']

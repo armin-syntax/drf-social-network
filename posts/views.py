@@ -1,22 +1,23 @@
+from django.shortcuts import get_object_or_404
 from django.db.models import Count
-from rest_framework import generics, permissions, filters, status
-from rest_framework.response import Response
+from rest_framework import generics, permissions, filters
 
 from utils.permissions import IsOwnerOrReadOnlyPermission
-from .models import Post
+from .models import Post, Comment
 from .serializers import (
     PostCreateSerializer,
     PostListSerializer,
     PostDetailSerializer,
     CommentCreateSerializer,
+    CommentSerializer,
 )
 
 
 class PostListCreateAPIView(generics.ListCreateAPIView):
-    queryset = Post.objects.annotate(comments_count=Count('comments'))
+    queryset = Post.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
-    search_fields = ['body']
+    search_fields = ['user__username', 'description']
     
     def get_serializer_class(self):
         return PostListSerializer if self.request.method == 'GET' else PostCreateSerializer
@@ -30,10 +31,26 @@ class PostDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PostDetailSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnlyPermission]
     lookup_field = 'pk'
+    lookup_url_kwarg = 'post_id'
 
-    def post(self, request, *args, **kwargs):
-        post = self.get_object()
-        serializer = CommentCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(user=request.user, post=post)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class CommentListCreateAPIView(generics.ListCreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        get_object_or_404(Post, pk=self.kwargs['post_id'])
+        return Comment.objects.filter(post_id=self.kwargs['post_id'])
+
+    def get_serializer_class(self):
+        return (
+            CommentSerializer
+            if self.request.method == 'GET'
+            else CommentCreateSerializer
+        )
+
+    def perform_create(self, serializer):
+        get_object_or_404(Post, pk=self.kwargs['post_id'])
+        serializer.save(
+            user=self.request.user,
+            post_id=self.kwargs['post_id'],
+        )
