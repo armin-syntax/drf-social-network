@@ -1,6 +1,5 @@
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
-from django.db.models import Count
 from rest_framework import generics, permissions, filters, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -28,18 +27,18 @@ class UserListCreateAPIView(generics.ListCreateAPIView):
     search_fields = ['username', 'full_name', 'bio']
     
     def get_permissions(self):
-        return [permissions.IsAuthenticated()] if self.request.method == 'GET' else [IsAnonymousPermission()]
+        if self.request.method == 'GET':
+            return [permissions.IsAuthenticated()]        
+        return [IsAnonymousPermission()]
 
     def get_serializer_class(self):
-        return UserListSerializer if self.request.method == 'GET' else UserCreateSerializer
+        if self.request.method == 'GET':
+            return UserListSerializer
+        return UserCreateSerializer
 
 
 class UserDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.annotate(
-        posts_count=Count('posts'),
-        followers_count=Count('followers'),
-        following_count=Count('following'),
-    )
+    queryset = User.objects.all()
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnlyPermission]
     serializer_class = UserDetailSerializer
     lookup_field = 'username'

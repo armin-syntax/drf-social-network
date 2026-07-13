@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError
-from rest_framework.reverse import reverse
 
 from .models import Relation
 
@@ -34,11 +33,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
 
 class UserListSerializer(serializers.ModelSerializer):
-    profile_url = serializers.HyperlinkedIdentityField(
-        view_name='accounts:user-detail',
-        lookup_field='username',
-    )
-
     class Meta:
         model = User
         fields = [
@@ -48,7 +42,6 @@ class UserListSerializer(serializers.ModelSerializer):
             'full_name'
             'bio',
             'avatar',
-            'profile_url',
         ]
     
     def to_representation(self, instance):
@@ -57,30 +50,19 @@ class UserListSerializer(serializers.ModelSerializer):
 
         if request and request.user != instance:
             data['email'] = None
+
         return data
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=False)
 
-    posts_count = serializers.IntegerField(read_only=True)
-    followers_count = serializers.IntegerField(read_only=True)
-    following_count = serializers.IntegerField(read_only=True)
+    posts_count = serializers.ReadOnlyField()
+    followers_count = serializers.ReadOnlyField()
+    following_count = serializers.ReadOnlyField()
 
-    post_list_url = serializers.HyperlinkedIdentityField(
-        view_name='accounts:user-post-list',
-        lookup_field='username',
-    )
-    follower_list_url = serializers.HyperlinkedIdentityField(
-        view_name='accounts:user-follower-list',
-        lookup_field='username',
-    )
-    following_list_url = serializers.HyperlinkedIdentityField(
-        view_name='accounts:user-following-list',
-        lookup_field='username',
-    )
-    follow_url = serializers.SerializerMethodField()
-    unfollow_url = serializers.SerializerMethodField()
+    is_owner = serializers.SerializerMethodField()
+    is_following = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -88,57 +70,54 @@ class UserDetailSerializer(serializers.ModelSerializer):
             'id',
             'username',
             'email',
-            'full_name'
+            'full_name',
             'bio',
             'avatar',
             'posts_count',
             'followers_count',
             'following_count',
-            'post_list_url',
-            'follower_list_url',
-            'following_list_url',
-            'follow_url',
-            'unfollow_url',
+            'is_owner',
+            'is_following',
         ]
-    
+        read_only_fields = [
+            'id',
+            'posts_count',
+            'followers_count',
+            'following_count',
+            'is_owner',
+            'is_following',
+        ]
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         request = self.context.get('request')
 
         if request and request.user != instance:
             data['email'] = None
-            data['phone_number'] = None
+
         return data
-    
-    def get_follow_url(self, obj):
+
+    def get_is_owner(self, obj):
         request = self.context.get('request')
 
-        if not request or request.user == obj:
-            return None
-        
-        if Relation.objects.filter(from_user=request.user, to_user=obj).exists():
-            return None
-    
-        return reverse('accounts:user-follow', args=[obj.username], request=request)
+        if not request or request.user.is_anonymous:
+            return False
 
-    def get_unfollow_url(self, obj):
+        return request.user == obj
+
+    def get_is_following(self, obj):
         request = self.context.get('request')
 
-        if not request or request.user == obj:
-            return None
-        
-        if not Relation.objects.filter(from_user=request.user, to_user=obj).exists():
-            return None
-        
-        return reverse('accounts:user-unfollow', args=[obj.username], request=request)
+        if not request or request.user.is_anonymous:
+            return False
+
+        if request.user == obj:
+            return False
+
+        return Relation.objects.filter(from_user=request.user, to_user=obj).exists()
 
 
 class UserInlineSerializer(serializers.ModelSerializer):
-    profile_url = serializers.HyperlinkedIdentityField(
-        view_name='accounts:user-detail',
-        lookup_field='username',
-    )
-
     class Meta:
         model = User
-        fields = ['id', 'username', 'full_name', 'profile_url']
+        fields = ['id', 'username', 'full_name', 'bio', 'avatar']

@@ -57,24 +57,27 @@ class CustomUser(AbstractUser):
     
     # ----- COUNTS -----
 
-    def get_followers_count(self):
+    @property
+    def followers_count(self):
         return self.followers.count()
     
-    def get_following_count(self):
+    @property
+    def following_count(self):
         return self.following.count()
     
-    def get_posts_count(self):
+    @property
+    def posts_count(self):
         return self.posts.count()
 
     # ----- LISTS -----
 
-    def get_follower_list(self):
+    def follower_list(self):
         return CustomUser.objects.filter(following__to_user=self)
     
-    def get_following_list(self):
+    def following_list(self):
         return CustomUser.objects.filter(followers__from_user=self)
 
-    def get_post_list(self):
+    def post_list(self):
         return self.posts.all()
 
 
